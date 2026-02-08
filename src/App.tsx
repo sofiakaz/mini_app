@@ -22,6 +22,15 @@ type Genre =
   | "детектив"
   | "семейный"
 
+type TgUser = {
+  id: number
+  first_name?: string
+  last_name?: string
+  username?: string
+  photo_url?: string
+}
+
+
 /* ===== КОНСТАНТЫ ===== */
 
 const ERAS = [
@@ -69,6 +78,28 @@ function App() {
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
 
+  // ===== TELEGRAM =====
+  const [isTelegram, setIsTelegram] = useState(false)
+  const [tgUser, setTgUser] = useState<TgUser | null>(null)
+
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp
+
+    if (tg) {
+      setIsTelegram(true)
+      tg.ready()
+
+      if (tg.initDataUnsafe?.user) {
+        setTgUser(tg.initDataUnsafe.user)
+        console.log("Telegram user:", tg.initDataUnsafe.user)
+      }
+
+      tg.setHeaderColor("secondary_bg_color")
+      tg.setBackgroundColor("bg_color")
+    }
+  }, [])
+
+  // ===== ФИЛЬТРАЦИЯ =====
   const filteredMovies = useMemo(() => {
     const result = movies.filter((movie) => {
       const matchesEra =
@@ -108,16 +139,21 @@ function App() {
       }
     : null
 
-  /* ===== UI ===== */
-
+  // ===== UI =====
   const content = (
     <div className="relative w-full h-full bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden">
-      {/* ===== КОНТЕНТ ===== */}
+
+      {/* TELEGRAM USER DEBUG */}
+      {isTelegram && tgUser && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-xs text-gray-600 bg-white/80 px-3 py-1 rounded-full shadow">
+          @{tgUser.username ?? tgUser.first_name}
+        </div>
+      )}
+
       <div className="h-full pb-24">
         {/* FEED */}
         {view === "feed" && (
           <div className="relative h-full pt-48 flex justify-center">
-            {/* кнопка фильтра — ниже */}
             <button
               onClick={() => setIsFilterOpen(true)}
               className="absolute top-32 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
@@ -125,7 +161,6 @@ function App() {
               <Filter className="w-5 h-5 text-white" />
             </button>
 
-            {/* карточка — ниже */}
             {mappedMovie && (
               <MovieCard
                 movie={mappedMovie}
@@ -194,5 +229,6 @@ function App() {
   const isDev = import.meta.env.DEV
   return isDev ? <PhonePreview>{content}</PhonePreview> : content
 }
+
 
 export default App
