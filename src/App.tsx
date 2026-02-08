@@ -40,16 +40,6 @@ const ERAS = [
   { key: "2020s", label: "2020–2026", from: 2020, to: 2026 },
 ] as const
 
-const GENRES: { label: string; value: Genre }[] = [
-  { label: "Драма", value: "драма" },
-  { label: "Фантастика", value: "фантастика" },
-  { label: "Ужасы", value: "ужасы" },
-  { label: "Комедия", value: "комедия" },
-  { label: "Триллер", value: "триллер" },
-  { label: "Детектив", value: "детектив" },
-  { label: "Семейный", value: "семейный" },
-]
-
 /* ===== ВСПОМОГАТЕЛЬНОЕ ===== */
 
 function normalizeGenre(genre: string): Genre {
@@ -73,8 +63,9 @@ function App() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [view, setView] = useState<View>("feed")
 
-  const [selectedEras, setSelectedEras] = useState<Era[]>([])
-  const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
+  const [selectedEras] = useState<Era[]>([])
+  const [selectedGenre] = useState<Genre | null>(null)
+
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
 
