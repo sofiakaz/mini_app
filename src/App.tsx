@@ -120,7 +120,9 @@ function App() {
         title: movie.title,
         year: movie.year,
         country: movie.country ?? "—",
-        poster: movie.poster,
+        poster: movie.poster
+          ? `/.netlify/functions/image?url=${encodeURIComponent(movie.poster)}`
+          : "/poster-placeholder.jpg",
         rating: movie.vote_average,
         description: movie.description,
         director: movie.director,
