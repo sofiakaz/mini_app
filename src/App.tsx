@@ -144,7 +144,7 @@ function App() {
 
       <main className="flex-1 pb-24">
         {view === "feed" && (
-          <div className="relative h-full pt-40 flex justify-center">
+          <div className="relative min-h-screen pt-40 flex justify-center">
             <button
               onClick={() => setIsFilterOpen(true)}
               className="absolute top-24 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
