@@ -142,7 +142,7 @@ function App() {
         </div>
       )}
 
-      <main className="flex-1 overflow-hidden pb-24">
+      <main className="flex-1 pb-24">
         {view === "feed" && (
           <div className="relative h-full pt-40 flex justify-center">
             <button
