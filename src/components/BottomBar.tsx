@@ -10,7 +10,7 @@ export function BottomBar({
   setView: (v: View) => void
 }) {
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 h-20 bg-white/90 backdrop-blur border-t flex items-center justify-around">
+    <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/90 backdrop-blur border-t flex items-center justify-around">
       {/* Подборки */}
       <button
         onClick={() => setView("collections")}
