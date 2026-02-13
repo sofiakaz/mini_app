@@ -8,6 +8,7 @@ import {
   Info,
   Clock,
   Film,
+  Eye,  // Добавлено для кнопки просмотра
 } from "lucide-react"
 
 export interface Movie {
@@ -26,16 +27,20 @@ interface Props {
   movie: Movie
   onLike?: () => void
   onDislike?: () => void
+  onViewed?: () => void  // Добавлено
   onRemove?: () => void
   isFavorite?: boolean
+  isViewed?: boolean  // Добавлено
 }
 
 export function MovieCard({
   movie,
   onLike,
   onDislike,
+  onViewed,  // Добавлено
   onRemove,
   isFavorite = false,
+  isViewed = false,  // Добавлено
 }: Props) {
   const [showInfo, setShowInfo] = useState(false)
   const [currentMovie, setCurrentMovie] = useState(movie)
@@ -75,6 +80,13 @@ export function MovieCard({
               <Info className="w-4 h-4 text-white" />
             </button>
 
+            {/* Индикатор просмотра */}
+            {isViewed && (
+              <div className="absolute top-3 left-3 z-20 bg-green-500 rounded-full p-1">
+                <Eye className="w-4 h-4 text-white" />
+              </div>
+            )}
+
             <div className="absolute bottom-20 left-4 right-4 text-white z-10">
               <h2 className="text-2xl font-semibold mb-1">
                 {currentMovie.title}
@@ -97,12 +109,19 @@ export function MovieCard({
 
             {/* ACTION BUTTONS */}
             {!isFavorite && (
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-16 z-10">
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 z-10">  {/* Уменьшен gap для трех кнопок */}
                 <button
                   onClick={() => onDislike?.()}
                   className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg"
                 >
                   <X className="w-6 h-6 text-red-500" />
+                </button>
+
+                <button
+                  onClick={() => onViewed?.()}  // Добавлено
+                  className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
+                >
+                  <Eye className="w-6 h-6 text-white" />
                 </button>
 
                 <button
