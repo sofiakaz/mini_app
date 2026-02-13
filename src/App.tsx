@@ -144,11 +144,11 @@ function AppContent() {
       <div className="h-full pb-20">
         {/* FEED */}
         {view === "feed" && (
-          <div className="relative h-full pt-44 flex justify-center">
+          <div className="relative h-full pt-40 flex justify-center">
             {/* кнопка фильтра — ниже */}
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="absolute top-28 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
+              className="absolute top-24 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
             >
               <Filter className="w-5 h-5 text-white" />
             </button>
