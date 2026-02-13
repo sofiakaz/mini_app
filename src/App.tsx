@@ -132,10 +132,10 @@ function AppContent() {
   /* ===== UI ===== */
 
   const content = (
-    <div className="relative w-full h-full bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden">
+    <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden">
       {/* Telegram user info */}
       {tgUser && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 text-xs bg-white/80 px-3 py-1 rounded-full">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-xs bg-white/80 px-3 py-1 rounded-full shadow-sm">
           @{tgUser.username ?? tgUser.first_name}
         </div>
       )}
@@ -144,11 +144,11 @@ function AppContent() {
       <div className="h-full pb-20">
         {/* FEED */}
         {view === "feed" && (
-          <div className="relative h-full pt-48 flex justify-center">
+          <div className="relative h-full pt-44 flex justify-center">
             {/* кнопка фильтра — ниже */}
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="absolute top-32 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
+              className="absolute top-28 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
             >
               <Filter className="w-5 h-5 text-white" />
             </button>
@@ -174,7 +174,7 @@ function AppContent() {
 
         {/* FAVORITES */}
         {view === "favorites" && (
-          <div className="h-full px-4 pt-6 pb-20 space-y-4 overflow-y-auto no-scrollbar">
+          <div className="h-full px-4 pt-6 pb-8 space-y-4 overflow-y-auto no-scrollbar">
             {favorites.length === 0 && (
               <div className="text-center text-gray-400 mt-32">
                 Избранное пусто 💔
@@ -195,7 +195,7 @@ function AppContent() {
 
         {/* COLLECTIONS */}
         {view === "collections" && (
-          <div className="h-full overflow-y-auto no-scrollbar pb-12">
+          <div className="h-full overflow-y-auto no-scrollbar pb-4">
             <CollectionsPage
               onSelectCollection={setSelectedCollection}
               selectedCollection={selectedCollection}
