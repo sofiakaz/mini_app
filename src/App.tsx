@@ -6,6 +6,7 @@ import { PhonePreview } from "./components/PhonePreview"
 import { BottomBar } from "./components/BottomBar"
 import { Filter, X } from "lucide-react"
 import { useFavorites } from "./context/FavoritesContext"
+import { ViewedProvider, useViewed } from "./context/ViewedContext"
 import { CollectionsPage } from "./components/CollectionsPage"
 
 /* ===== ТИПЫ ===== */
@@ -65,15 +66,13 @@ function shuffle<T>(array: T[]) {
 
 /* ===== APP ===== */
 
-function App() {
+function AppContent() {
   const [index, setIndex] = useState(0)
-  const [view, setView] = useState<View>("feed")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-
+  const [view, setView] = useState<View>("feed")
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(null)
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
-
-  const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
 
   /* ===== TELEGRAM ===== */
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
@@ -88,7 +87,8 @@ function App() {
     }
   }, [])
 
-  /* ===== ФИЛЬТРАЦИЯ ===== */
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
+  const { addToViewed, isViewed } = useViewed()
 
   const filteredMovies = useMemo(() => {
     const result = movies.filter((movie) => {
@@ -120,9 +120,7 @@ function App() {
         title: movie.title,
         year: movie.year,
         country: movie.country ?? "—",
-        poster: movie.poster
-          ? `/.netlify/functions/image?url=${encodeURIComponent(movie.poster)}`
-          : "/poster-placeholder.jpg",
+        poster: movie.poster,
         rating: movie.vote_average,
         description: movie.description,
         director: movie.director,
@@ -134,24 +132,28 @@ function App() {
   /* ===== UI ===== */
 
   const content = (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200">
-
+    <div className="relative w-full h-full bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden">
+      {/* Telegram user info */}
       {tgUser && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 text-xs bg-white/80 px-3 py-1 rounded-full">
           @{tgUser.username ?? tgUser.first_name}
         </div>
       )}
 
-      <main className="flex-1 pb-24">
+      {/* ===== КОНТЕНТ ===== */}
+      <div className="h-full pb-20">
+        {/* FEED */}
         {view === "feed" && (
-          <div className="relative min-h-screen pt-40 flex justify-center">
+          <div className="relative h-full pt-48 flex justify-center">
+            {/* кнопка фильтра — ниже */}
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="absolute top-24 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
+              className="absolute top-32 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
             >
               <Filter className="w-5 h-5 text-white" />
             </button>
 
+            {/* карточка — ниже */}
             {mappedMovie && (
               <MovieCard
                 movie={mappedMovie}
@@ -160,13 +162,19 @@ function App() {
                   setIndex((i) => i + 1)
                 }}
                 onDislike={() => setIndex((i) => i + 1)}
+                onViewed={() => {
+                  addToViewed(mappedMovie)
+                  setIndex((i) => i + 1)
+                }}
+                isViewed={isViewed(mappedMovie.title)}
               />
             )}
           </div>
         )}
 
+        {/* FAVORITES */}
         {view === "favorites" && (
-          <div className="h-full px-4 pt-6 space-y-4 overflow-y-auto">
+          <div className="h-full px-4 pt-6 pb-20 space-y-4 overflow-y-auto no-scrollbar">
             {favorites.length === 0 && (
               <div className="text-center text-gray-400 mt-32">
                 Избранное пусто 💔
@@ -179,19 +187,28 @@ function App() {
                 movie={movie}
                 isFavorite
                 onRemove={() => removeFromFavorites(movie.title)}
+                isViewed={isViewed(movie.title)}
               />
             ))}
           </div>
         )}
 
+        {/* COLLECTIONS */}
         {view === "collections" && (
-          <div className="h-full overflow-y-auto">
-            <CollectionsPage />
+          <div className="h-full overflow-y-auto no-scrollbar pb-12">
+            <CollectionsPage
+              onSelectCollection={setSelectedCollection}
+              selectedCollection={selectedCollection}
+              onBack={() => setSelectedCollection(null)}
+              onLike={addToFavorites}
+              onViewed={addToViewed}
+              isViewed={isViewed}
+            />
           </div>
         )}
-      </main>
+      </div>
 
-      {/* ===== FILTER ===== */}
+      {/* FILTER */}
       {isFilterOpen && (
         <div className="absolute inset-0 z-50">
           <div
@@ -272,6 +289,14 @@ function App() {
 
   const isDev = import.meta.env.DEV
   return isDev ? <PhonePreview>{content}</PhonePreview> : content
+}
+
+function App() {
+  return (
+    <ViewedProvider>
+      <AppContent />
+    </ViewedProvider>
+  )
 }
 
 export default App
