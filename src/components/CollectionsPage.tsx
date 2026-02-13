@@ -76,11 +76,11 @@ export function CollectionsPage({
   if (selectedCollection && selectedColl) {
     // Режим ленты для выбранной подборки
     return (
-      <div className="relative h-full pt-48 flex justify-center bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200">
+      <div className="relative h-full pt-32 flex justify-center bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 pb-20">  {/* pt-32 для карточек ниже, pb-20 для bottom bar */}
         {/* Кнопка "Назад" */}
         <button
           onClick={onBack}
-          className="absolute top-32 left-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
+          className="absolute top-24 left-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
@@ -107,14 +107,14 @@ export function CollectionsPage({
 
   // Режим списка подборок
   return (
-    <div className="relative h-full bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200">
-      {/* Хедер (абсолютно позиционирован вверху с градиентным фоном, чтобы соответствовать бэкграунду и скрывать контент под ним) */}
+    <div className="relative h-full bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 pb-4">  {/* pb-20 для bottom bar */}
+      {/* Хедер закреплен наверху */}  {/* Изменено: absolute top-0 для закрепления наверху */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-rose-200 via-rose-200 to-rose-180 px-5 py-6">
         <h1 className="text-3xl font-bold">Подборки</h1>
       </div>
 
       {/* Скроллируемый контент */}
-      <div className="overflow-y-auto no-scrollbar pt-32 px-4 pb-12 h-full">
+      <div className="overflow-y-auto no-scrollbar pt-20 px-4 pb-4 h-full">  {/* Изменено: pt-20 (80px) для отступа под хедер, pb-20 для bottom bar */}
         <div className="px-4 space-y-8">
           {collections.map((collection) => {
             // Аналогично фильтруем для постеров
