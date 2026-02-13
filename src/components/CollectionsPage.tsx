@@ -76,7 +76,7 @@ export function CollectionsPage({
   if (selectedCollection && selectedColl) {
     // Режим ленты для выбранной подборки
     return (
-      <div className="relative h-full pt-32 flex justify-center bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 pb-20">  {/* pt-32 для карточек ниже, pb-20 для bottom bar */}
+      <div className="relative h-full pt-32 flex justify-center bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 pb-4">  {/* pt-32 для карточек ниже, pb-20 для bottom bar */}
         {/* Кнопка "Назад" */}
         <button
           onClick={onBack}
