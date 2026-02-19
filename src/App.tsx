@@ -5,12 +5,13 @@ import type { Movie } from "./components/MovieCard"
 import { PhonePreview } from "./components/PhonePreview"
 import { BottomBar } from "./components/BottomBar"
 import { Filter, X } from "lucide-react"
-import { useFavorites } from "./context/FavoritesContext"
+
+// Импорты контекстов
+import { FavoritesProvider, useFavorites } from "./context/FavoritesContext"
 import { ViewedProvider, useViewed } from "./context/ViewedContext"
 import { CollectionsPage } from "./components/CollectionsPage"
 
 /* ===== ТИПЫ ===== */
-
 type Era = "pre2000" | "2000s" | "2010s" | "2020s"
 type View = "feed" | "favorites" | "collections"
 
@@ -30,7 +31,6 @@ type TgUser = {
 }
 
 /* ===== КОНСТАНТЫ ===== */
-
 const ERAS = [
   { key: "pre2000", label: "До 2000", from: 0, to: 1999 },
   { key: "2000s", label: "2000–2010", from: 2000, to: 2010 },
@@ -49,12 +49,12 @@ const GENRES: { label: string; value: Genre }[] = [
 ]
 
 /* ===== ВСПОМОГАТЕЛЬНОЕ ===== */
-
 function normalizeGenre(genre: string): Genre {
   return genre.trim().toLowerCase() as Genre
 }
 
 function formatGenres(genres: string[]) {
+  if (genres.length === 0) return ""
   if (genres.length === 1) return genres[0]
   if (genres.length === 2) return `${genres[0]} и ${genres[1]}`
   return `${genres.slice(0, -1).join(", ")} и ${genres.at(-1)}`
@@ -64,8 +64,7 @@ function shuffle<T>(array: T[]) {
   return [...array].sort(() => Math.random() - 0.5)
 }
 
-/* ===== APP ===== */
-
+/* ===== ОСНОВНОЙ КОНТЕНТ ПРИЛОЖЕНИЯ ===== */
 function AppContent() {
   const [index, setIndex] = useState(0)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -73,23 +72,25 @@ function AppContent() {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null)
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
-
-  /* ===== TELEGRAM ===== */
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
 
-  useEffect(() => {
-    const tg = window.Telegram?.WebApp
-    if (!tg) return
-
-    tg.ready()
-    if (tg.initDataUnsafe?.user) {
-      setTgUser(tg.initDataUnsafe.user)
-    }
-  }, [])
-
+  // Получаем данные из контекстов (теперь они доступны)
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
+  /* ===== TELEGRAM INIT ===== */
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp
+    if (tg) {
+      tg.ready()
+      tg.expand() // Расширяем на весь экран
+      if (tg.initDataUnsafe?.user) {
+        setTgUser(tg.initDataUnsafe.user)
+      }
+    }
+  }, [])
+
+  /* ===== ЛОГИКА ФИЛЬТРАЦИИ ===== */
   const filteredMovies = useMemo(() => {
     const result = movies.filter((movie) => {
       const matchesEra =
@@ -113,48 +114,45 @@ function AppContent() {
     setIndex(0)
   }, [selectedEras, selectedGenre])
 
-  const movie = filteredMovies[index % Math.max(filteredMovies.length, 1)]
+  const currentMovieData = filteredMovies[index % Math.max(filteredMovies.length, 1)]
 
-  const mappedMovie: Movie | null = movie
-    ? {
-        title: movie.title,
-        year: movie.year,
-        country: movie.country ?? "—",
-        poster: movie.poster,
-        rating: movie.vote_average,
-        description: movie.description,
-        director: movie.director,
-        duration: movie.duration,
-        genre: formatGenres(movie.genres),
-      }
-    : null
+  const mappedMovie: Movie | null = useMemo(() => {
+    if (!currentMovieData) return null
+    return {
+      title: currentMovieData.title,
+      year: currentMovieData.year,
+      country: (currentMovieData as any).country ?? "—",
+      poster: currentMovieData.poster,
+      rating: (currentMovieData as any).vote_average ?? currentMovieData.rating,
+      description: currentMovieData.description,
+      director: currentMovieData.director,
+      duration: currentMovieData.duration,
+      genre: formatGenres(currentMovieData.genres),
+    }
+  }, [currentMovieData])
 
-  /* ===== UI ===== */
-
+  /* ===== UI КОМПОНЕНТЫ ===== */
   const content = (
-    <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden">
-      {/* Telegram user info */}
+    <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900">
+      {/* Юзербар */}
       {tgUser && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-xs bg-white/80 px-3 py-1 rounded-full shadow-sm">
-          @{tgUser.username ?? tgUser.first_name}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-[10px] font-medium bg-white/60 backdrop-blur-md px-3 py-1 rounded-full shadow-sm border border-white/40">
+          @{tgUser.username || tgUser.first_name}
         </div>
       )}
 
-      {/* ===== КОНТЕНТ ===== */}
       <div className="h-full pb-20">
-        {/* FEED */}
+        {/* ЛЕНТА (FEED) */}
         {view === "feed" && (
-          <div className="relative h-full pt-40 flex justify-center">
-            {/* кнопка фильтра — ниже */}
+          <div className="relative h-full pt-32 flex justify-center px-4">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="absolute top-24 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center"
+              className="absolute top-20 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
             >
               <Filter className="w-5 h-5 text-white" />
             </button>
 
-            {/* карточка — ниже */}
-            {mappedMovie && (
+            {mappedMovie ? (
               <MovieCard
                 movie={mappedMovie}
                 onLike={() => {
@@ -168,116 +166,102 @@ function AppContent() {
                 }}
                 isViewed={isViewed(mappedMovie.title)}
               />
+            ) : (
+              <div className="mt-40 text-gray-500">Фильмы не найдены 🔍</div>
             )}
           </div>
         )}
 
-        {/* FAVORITES */}
+        {/* ИЗБРАННОЕ (FAVORITES) */}
         {view === "favorites" && (
           <div className="h-full px-4 pt-6 pb-8 space-y-4 overflow-y-auto no-scrollbar">
-            {favorites.length === 0 && (
+            <h2 className="text-2xl font-bold px-2 mb-4">Избранное</h2>
+            {favorites.length === 0 ? (
               <div className="text-center text-gray-400 mt-32">
-                Избранное пусто 💔
+                Здесь пока пусто 💔
               </div>
+            ) : (
+              favorites.map((m) => (
+                <MovieCard
+                  key={m.title}
+                  movie={m}
+                  isFavorite
+                  onRemove={() => removeFromFavorites(m.title)}
+                  isViewed={isViewed(m.title)}
+                />
+              ))
             )}
-
-            {favorites.map((movie) => (
-              <MovieCard
-                key={movie.title}
-                movie={movie}
-                isFavorite
-                onRemove={() => removeFromFavorites(movie.title)}
-                isViewed={isViewed(movie.title)}
-              />
-            ))}
           </div>
         )}
 
-        {/* COLLECTIONS */}
+        {/* ПОДБОРКИ (COLLECTIONS) */}
         {view === "collections" && (
-          <div className="h-full overflow-y-auto no-scrollbar pb-4">
+          <div className="h-full overflow-y-auto no-scrollbar">
             <CollectionsPage
               onSelectCollection={setSelectedCollection}
               selectedCollection={selectedCollection}
               onBack={() => setSelectedCollection(null)}
               onLike={addToFavorites}
               onViewed={addToViewed}
-              isViewed={isViewed}
+              isViewed={(title) => isViewed(title)}
             />
           </div>
         )}
       </div>
 
-      {/* FILTER */}
+      {/* МОДАЛКА ФИЛЬТРОВ */}
       {isFilterOpen && (
-        <div className="absolute inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsFilterOpen(false)}
-          />
-
-          <div className="absolute bottom-0 left-0 right-0 h-[75%] bg-white rounded-t-3xl p-6 overflow-y-auto">
-            <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" />
-
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-semibold">Фильтры</h3>
-              <button onClick={() => setIsFilterOpen(false)}>
-                <X className="w-6 h-6 text-gray-500" />
+        <div className="absolute inset-0 z-[60]">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 h-[70%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold">Фильтры</h3>
+              <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-100 rounded-full">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            {/* ЭРЫ */}
-            <div className="mb-6">
-              <h4 className="font-semibold mb-3">Годы</h4>
-              <div className="flex flex-wrap gap-2">
-                {ERAS.map((era) => {
-                  const active = selectedEras.includes(era.key)
-                  return (
-                    <button
-                      key={era.key}
-                      onClick={() =>
-                        setSelectedEras((prev) =>
-                          active
-                            ? prev.filter((e) => e !== era.key)
-                            : [...prev, era.key]
-                        )
-                      }
-                      className={`px-4 py-2 rounded-full text-sm border ${
-                        active
-                          ? "bg-pink-500 text-white border-pink-500"
-                          : "border-gray-300 text-gray-600"
-                      }`}
-                    >
-                      {era.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            <div className="space-y-8">
+              <section>
+                <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Эпоха</h4>
+                <div className="flex flex-wrap gap-2">
+                  {ERAS.map((era) => {
+                    const active = selectedEras.includes(era.key)
+                    return (
+                      <button
+                        key={era.key}
+                        onClick={() => setSelectedEras(prev => active ? prev.filter(e => e !== era.key) : [...prev, era.key])}
+                        className={`px-5 py-2.5 rounded-2xl text-sm font-medium transition-all ${
+                          active ? "bg-pink-500 text-white shadow-md shadow-pink-200" : "bg-gray-50 text-gray-600 border border-gray-100"
+                        }`}
+                      >
+                        {era.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
 
-            {/* ЖАНРЫ */}
-            <div>
-              <h4 className="font-semibold mb-3">Жанр</h4>
-              <div className="flex flex-wrap gap-2">
-                {GENRES.map((genre) => {
-                  const active = selectedGenre === genre.value
-                  return (
-                    <button
-                      key={genre.value}
-                      onClick={() =>
-                        setSelectedGenre(active ? null : genre.value)
-                      }
-                      className={`px-4 py-2 rounded-full text-sm border ${
-                        active
-                          ? "bg-pink-500 text-white border-pink-500"
-                          : "border-gray-300 text-gray-600"
-                      }`}
-                    >
-                      {genre.label}
-                    </button>
-                  )
-                })}
-              </div>
+              <section>
+                <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Жанр</h4>
+                <div className="flex flex-wrap gap-2">
+                  {GENRES.map((g) => {
+                    const active = selectedGenre === g.value
+                    return (
+                      <button
+                        key={g.value}
+                        onClick={() => setSelectedGenre(active ? null : g.value)}
+                        className={`px-5 py-2.5 rounded-2xl text-sm font-medium transition-all ${
+                          active ? "bg-pink-500 text-white shadow-md shadow-pink-200" : "bg-gray-50 text-gray-600 border border-gray-100"
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
             </div>
           </div>
         </div>
@@ -291,11 +275,14 @@ function AppContent() {
   return isDev ? <PhonePreview>{content}</PhonePreview> : content
 }
 
+/* ===== ТОЧКА ВХОДА (APP) ===== */
 function App() {
   return (
-    <ViewedProvider>
-      <AppContent />
-    </ViewedProvider>
+    <FavoritesProvider>
+      <ViewedProvider>
+        <AppContent />
+      </ViewedProvider>
+    </FavoritesProvider>
   )
 }
 
