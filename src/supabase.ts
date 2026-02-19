@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'ТВОЙ_SUPABASE_URL' // заменишь позже
-const supabaseKey = 'ТВОЙ_SUPABASE_ANON_KEY' // заменишь позже
+const supabaseUrl = 'https://cvqdnemgrlimzdxbdzjl.supabase.co' // замени на реальный из Supabase → Settings → API → Project URL
+const supabaseKey = 'sb_publishable_Cl0YT6GnpaBnXCalgq2qYw_vk-TKbbh' // замени на реальный из Supabase → Settings → API → anon public key
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Получить ID пользователя
+// Получить ID пользователя (Telegram или гость)
 export function getUserId(): string {
   // Telegram
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
