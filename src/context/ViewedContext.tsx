@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react"
-import type { ReactNode } from "react"  // Добавлено: type-only import для ReactNode
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { supabase, getUserId } from '../supabase'
 import type { Movie } from "../components/MovieCard"
 
 interface ViewedContextType {
@@ -13,34 +13,72 @@ const ViewedContext = createContext<ViewedContextType | undefined>(undefined)
 
 export function ViewedProvider({ children }: { children: ReactNode }) {
   const [viewed, setViewed] = useState<Movie[]>([])
+  const userId = getUserId()
 
+  // Загрузить просмотренные из Supabase при старте
   useEffect(() => {
-    const stored = localStorage.getItem("viewed")
-    if (stored) {
-      setViewed(JSON.parse(stored))
-    }
+    loadViewed()
   }, [])
 
-  const addToViewed = (movie: Movie) => {
-    setViewed((prev) => {
-      if (!prev.some((m) => m.title === movie.title)) {
-        const newViewed = [...prev, movie]
-        localStorage.setItem("viewed", JSON.stringify(newViewed))
-        return newViewed
-      }
-      return prev
-    })
+  async function loadViewed() {
+    const { data } = await supabase
+      .from('viewed')
+      .select('*')
+      .eq('user_id', userId)
+    
+    if (data) {
+      const movies: Movie[] = data.map(row => ({
+        title: row.title,
+        year: row.year,
+        poster: row.poster,
+        rating: row.rating,
+        country: row.country,
+        director: row.director,
+        duration: row.duration,
+        genre: row.genre,
+        description: row.description,
+      }))
+      setViewed(movies)
+    }
   }
 
-  const removeFromViewed = (movie: Movie) => {
+  const addToViewed = useCallback(async (movie: Movie) => {
+    // Добавляем в Supabase
+    await supabase.from('viewed').upsert({
+      user_id: userId,
+      title: movie.title,
+      year: movie.year,
+      poster: movie.poster,
+      rating: movie.rating,
+      country: movie.country,
+      director: movie.director,
+      duration: movie.duration,
+      genre: movie.genre,
+      description: movie.description,
+    }, { onConflict: 'user_id,title' })
+    
+    // Добавляем в локальный стейт
     setViewed((prev) => {
-      const newViewed = prev.filter((m) => m.title !== movie.title)
-      localStorage.setItem("viewed", JSON.stringify(newViewed))
-      return newViewed
+      if (prev.some((m) => m.title === movie.title)) return prev
+      return [...prev, movie]
     })
-  }
+  }, [userId])
 
-  const isViewed = (title: string) => viewed.some((m) => m.title === title)
+  const removeFromViewed = useCallback(async (movie: Movie) => {
+    // Удаляем из Supabase
+    await supabase
+      .from('viewed')
+      .delete()
+      .eq('user_id', userId)
+      .eq('title', movie.title)
+    
+    // Удаляем из локального стейта
+    setViewed((prev) => prev.filter((m) => m.title !== movie.title))
+  }, [userId])
+
+  const isViewed = useCallback((title: string) => {
+    return viewed.some((m) => m.title === title)
+  }, [viewed])
 
   return (
     <ViewedContext.Provider value={{ viewed, addToViewed, removeFromViewed, isViewed }}>
