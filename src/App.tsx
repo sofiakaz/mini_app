@@ -77,7 +77,7 @@ function AppContent() {
   // Состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
   
-  // Состояние для блокировки кнопок
+  // Состояние для блокировки кнопок (предотвращает множественные нажатия)
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Получаем данные из контекстов
@@ -142,7 +142,7 @@ function AppContent() {
     }
   }, [currentMovieData])
 
-  // Упрощенные обработчики с защитой от множественных нажатий
+  // Обработчики с защитой от множественных нажатий
   const handleLike = () => {
     if (isProcessing || !mappedMovie) return
     setIsProcessing(true)
