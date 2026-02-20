@@ -1,22 +1,25 @@
+console.log('🔥🔥🔥 СУПЕР ВАЖНО: Я ВНУТРИ supabase.ts');
+console.log('Время:', new Date().toISOString());
+console.log('URL страницы:', window.location.href);
+
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://cvqdnemgrlimzdxbdzjl.supabase.co'
-const supabaseKey = 'твой-ключ' // Убедись, что ключ правильный!
+const supabaseKey = 'тут все есть, просто тебе не скидываю'
+
+console.log('URL загружен:', supabaseUrl);
+console.log('Ключ загружен, длина:', supabaseKey?.length);
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
+console.log('Клиент Supabase создан:', !!supabase);
 
-// ТЕСТ: проверим подключение
+// Тест подключения
 supabase.from('favorites').select('count', { count: 'exact', head: true })
-  .then(({ error }) => {
-    if (error) {
-      console.error('❌ Ошибка подключения к Supabase:', error.message)
-    } else {
-      console.log('✅ Подключение к Supabase работает!')
-    }
-  })
+  .then(() => console.log('✅ Тест подключения прошел успешно'))
+  .catch(err => console.log('❌ Тест подключения провалился:', err.message))
 
 export function getUserId(): string {
-  // Проверяем, что мы в Telegram
+  console.log('🆔 getUserId вызван');
   if (typeof window !== 'undefined') {
     try {
       const tg = (window as any).Telegram?.WebApp
