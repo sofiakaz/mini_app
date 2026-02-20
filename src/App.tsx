@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { movies } from "./data/movies"
 import { MovieCard } from "./components/MovieCard"
 import type { Movie } from "./components/MovieCard"
@@ -56,6 +56,9 @@ function AppContent() {
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
   const [hideViewed, setHideViewed] = useState(false)
   
+  // Реф для блокировки множественных нажатий
+  const isProcessing = useRef(false)
+
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
@@ -108,23 +111,40 @@ function AppContent() {
     }
   }, [currentMovieData])
 
-  // Простые обработчики без рефов
+  // Обработчики с защитой от множественных нажатий
   const handleLike = () => {
-    if (mappedMovie) {
-      addToFavorites(mappedMovie)
-      setIndex(i => i + 1)
-    }
+    if (isProcessing.current || !mappedMovie) return
+    isProcessing.current = true
+    
+    addToFavorites(mappedMovie)
+    setIndex(i => i + 1)
+    
+    setTimeout(() => {
+      isProcessing.current = false
+    }, 500)
   }
 
   const handleDislike = () => {
+    if (isProcessing.current) return
+    isProcessing.current = true
+    
     setIndex(i => i + 1)
+    
+    setTimeout(() => {
+      isProcessing.current = false
+    }, 500)
   }
 
   const handleViewed = () => {
-    if (mappedMovie) {
-      addToViewed(mappedMovie)
-      setIndex(i => i + 1)
-    }
+    if (isProcessing.current || !mappedMovie) return
+    isProcessing.current = true
+    
+    addToViewed(mappedMovie)
+    setIndex(i => i + 1)
+    
+    setTimeout(() => {
+      isProcessing.current = false
+    }, 500)
   }
 
   const content = (
