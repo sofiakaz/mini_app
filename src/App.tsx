@@ -73,8 +73,11 @@ function AppContent() {
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
+  
+  // НОВОЕ: состояние для скрытия просмотренных
+  const [hideViewed, setHideViewed] = useState(false)
 
-  // Получаем данные из контекстов (теперь они доступны)
+  // Получаем данные из контекстов
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
@@ -83,7 +86,7 @@ function AppContent() {
     const tg = (window as any).Telegram?.WebApp
     if (tg) {
       tg.ready()
-      tg.expand() // Расширяем на весь экран
+      tg.expand()
       if (tg.initDataUnsafe?.user) {
         setTgUser(tg.initDataUnsafe.user)
       }
@@ -93,6 +96,7 @@ function AppContent() {
   /* ===== ЛОГИКА ФИЛЬТРАЦИИ ===== */
   const filteredMovies = useMemo(() => {
     const result = movies.filter((movie) => {
+      // Фильтр по эпохе
       const matchesEra =
         selectedEras.length === 0 ||
         selectedEras.some((eraKey) => {
@@ -100,19 +104,23 @@ function AppContent() {
           return movie.year >= era.from && movie.year <= era.to
         })
 
+      // Фильтр по жанру
       const movieGenres = movie.genres.map(normalizeGenre)
       const matchesGenre =
         selectedGenre === null || movieGenres.includes(selectedGenre)
 
-      return matchesEra && matchesGenre
+      // НОВОЕ: фильтр "Скрыть просмотренные"
+      const matchesViewed = !hideViewed || !isViewed(movie.title)
+
+      return matchesEra && matchesGenre && matchesViewed
     })
 
     return shuffle(result)
-  }, [selectedEras, selectedGenre])
+  }, [selectedEras, selectedGenre, hideViewed, isViewed])
 
   useEffect(() => {
     setIndex(0)
-  }, [selectedEras, selectedGenre])
+  }, [selectedEras, selectedGenre, hideViewed])
 
   const currentMovieData = filteredMovies[index % Math.max(filteredMovies.length, 1)]
 
@@ -121,7 +129,7 @@ function AppContent() {
     return {
       title: currentMovieData.title,
       year: currentMovieData.year,
-      country: (currentMovieData as any).country ?? "—",
+      country: currentMovieData.country ?? "—",
       poster: currentMovieData.poster,
       rating: currentMovieData.vote_average ?? 0,
       description: currentMovieData.description,
@@ -167,7 +175,20 @@ function AppContent() {
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
-              <div className="mt-40 text-gray-500">Фильмы не найдены 🔍</div>
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <p className="text-xl font-medium">Фильмы не найдены</p>
+                <p className="text-sm mt-2">Попробуйте изменить настройки фильтра</p>
+                <button 
+                  onClick={() => {
+                    setHideViewed(false)
+                    setSelectedEras([])
+                    setSelectedGenre(null)
+                  }}
+                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium"
+                >
+                  Сбросить фильтры
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -213,7 +234,7 @@ function AppContent() {
       {isFilterOpen && (
         <div className="absolute inset-0 z-[60]">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 h-[70%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
+          <div className="absolute bottom-0 left-0 right-0 h-[85%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-y-auto">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-bold">Фильтры</h3>
@@ -261,6 +282,30 @@ function AppContent() {
                     )
                   })}
                 </div>
+              </section>
+
+              {/* НОВАЯ СЕКЦИЯ: Скрыть просмотренные */}
+              <section className="pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-gray-400 uppercase text-xs tracking-widest">
+                    Скрыть просмотренные
+                  </h4>
+                  <button
+                    onClick={() => setHideViewed(!hideViewed)}
+                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${
+                      hideViewed ? "bg-pink-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                        hideViewed ? "translate-x-6" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
+                </p>
               </section>
             </div>
           </div>
