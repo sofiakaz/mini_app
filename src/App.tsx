@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { movies } from "./data/movies"
 import { MovieCard } from "./components/MovieCard"
 import type { Movie } from "./components/MovieCard"
@@ -76,11 +76,9 @@ function AppContent() {
   
   // Состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
-
-  // Рефы для предотвращения множественных нажатий
-  const likeProcessingRef = useRef(false)
-  const dislikeProcessingRef = useRef(false)
-  const viewedProcessingRef = useRef(false)
+  
+  // Состояние для блокировки кнопок
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Получаем данные из контекстов
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
@@ -144,40 +142,34 @@ function AppContent() {
     }
   }, [currentMovieData])
 
-  // Обработчики с защитой от множественных нажатий
+  // Упрощенные обработчики с защитой от множественных нажатий
   const handleLike = () => {
-    if (likeProcessingRef.current || !mappedMovie) return
-    likeProcessingRef.current = true
+    if (isProcessing || !mappedMovie) return
+    setIsProcessing(true)
     
     addToFavorites(mappedMovie)
     setIndex((i) => i + 1)
     
-    setTimeout(() => {
-      likeProcessingRef.current = false
-    }, 300)
+    setTimeout(() => setIsProcessing(false), 500)
   }
 
   const handleDislike = () => {
-    if (dislikeProcessingRef.current) return
-    dislikeProcessingRef.current = true
+    if (isProcessing) return
+    setIsProcessing(true)
     
     setIndex((i) => i + 1)
     
-    setTimeout(() => {
-      dislikeProcessingRef.current = false
-    }, 300)
+    setTimeout(() => setIsProcessing(false), 500)
   }
 
   const handleViewed = () => {
-    if (viewedProcessingRef.current || !mappedMovie) return
-    viewedProcessingRef.current = true
+    if (isProcessing || !mappedMovie) return
+    setIsProcessing(true)
     
     addToViewed(mappedMovie)
     setIndex((i) => i + 1)
     
-    setTimeout(() => {
-      viewedProcessingRef.current = false
-    }, 300)
+    setTimeout(() => setIsProcessing(false), 500)
   }
 
   /* ===== UI КОМПОНЕНТЫ ===== */
@@ -338,6 +330,9 @@ function AppContent() {
                     />
                   </button>
                 </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
+                </p>
               </section>
             </div>
           </div>
