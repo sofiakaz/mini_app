@@ -77,7 +77,7 @@ function AppContent() {
   // НОВОЕ: состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
 
-  // Refs для предотвращения множественных нажатий
+  // Refs для предотвращения множественных нажатий - ИСПРАВЛЕНО!
   const likeRef = useRef(false);
   const viewRef = useRef(false);
   const dislikeRef = useRef(false);
@@ -88,7 +88,7 @@ function AppContent() {
 
   // Обработчики с защитой от множественных нажатий
   const handleLike = useCallback(() => {
-    if (likeRef.current || !mappedMovie) return;
+    if (likeRef.current) return;
     likeRef.current = true;
     
     addToFavorites(mappedMovie);
@@ -102,7 +102,7 @@ function AppContent() {
   }, [mappedMovie, addToFavorites]);
 
   const handleViewed = useCallback(() => {
-    if (viewRef.current || !mappedMovie) return;
+    if (viewRef.current) return;
     viewRef.current = true;
     
     addToViewed(mappedMovie);
@@ -330,6 +330,9 @@ function AppContent() {
                     />
                   </button>
                 </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
+                </p>
               </section>
             </div>
           </div>
