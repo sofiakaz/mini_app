@@ -296,9 +296,6 @@ function AppContent() {
                     />
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
-                </p>
               </section>
             </div>
           </div>
