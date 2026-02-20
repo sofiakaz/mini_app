@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase, getUserId } from '../supabase'
 import type { Movie } from "../components/MovieCard"
 
@@ -11,11 +11,10 @@ interface ViewedContextType {
 
 const ViewedContext = createContext<ViewedContextType | undefined>(undefined)
 
-export function ViewedProvider({ children }: { children: ReactNode }) {
+export function ViewedProvider({ children }: { children: React.ReactNode }) {
   const [viewed, setViewed] = useState<Movie[]>([])
   const userId = getUserId()
 
-  // Загрузить просмотренные из Supabase при старте
   useEffect(() => {
     loadViewed()
   }, [])
@@ -27,7 +26,7 @@ export function ViewedProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
     
     if (data) {
-      const movies: Movie[] = data.map(row => ({
+      const movies: Movie[] = data.map((row: any) => ({
         title: row.title,
         year: row.year,
         poster: row.poster,
@@ -43,7 +42,6 @@ export function ViewedProvider({ children }: { children: ReactNode }) {
   }
 
   const addToViewed = useCallback(async (movie: Movie) => {
-    // Добавляем в Supabase
     await supabase.from('viewed').upsert({
       user_id: userId,
       title: movie.title,
@@ -57,7 +55,6 @@ export function ViewedProvider({ children }: { children: ReactNode }) {
       description: movie.description,
     }, { onConflict: 'user_id,title' })
     
-    // Добавляем в локальный стейт
     setViewed((prev) => {
       if (prev.some((m) => m.title === movie.title)) return prev
       return [...prev, movie]
@@ -65,14 +62,12 @@ export function ViewedProvider({ children }: { children: ReactNode }) {
   }, [userId])
 
   const removeFromViewed = useCallback(async (movie: Movie) => {
-    // Удаляем из Supabase
     await supabase
       .from('viewed')
       .delete()
       .eq('user_id', userId)
       .eq('title', movie.title)
     
-    // Удаляем из локального стейта
     setViewed((prev) => prev.filter((m) => m.title !== movie.title))
   }, [userId])
 
