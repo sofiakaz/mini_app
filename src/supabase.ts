@@ -3,7 +3,20 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = 'https://cvqdnemgrlimzdxbdzjl.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cWRuZW1ncmxpbXpkeGJkempsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjI4MzEsImV4cCI6MjA4NzA5ODgzMX0.lbr5DopcgRmzZWUS0ts8cLyIlAexhNjymPEF8pbKOwE'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// ВАЖНО: передаем ключ явно с заголовками
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  },
+  global: {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`
+    }
+  }
+})
 
 export function getUserId(): string {
   try {
@@ -21,7 +34,6 @@ export function getUserId(): string {
     }
     return userId
   } catch {
-    // Убрали параметр err, так как он не используется
     return `guest_${Date.now()}`
   }
 }
