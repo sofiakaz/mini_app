@@ -86,6 +86,45 @@ function AppContent() {
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
+  const handleLike = useCallback(() => {
+    if (likeRef.current) return;
+    likeRef.current = true;
+    
+    addToFavorites(mappedMovie);
+    
+    setTimeout(() => {
+      setIndex((i) => i + 1);
+      setTimeout(() => {
+        likeRef.current = false;
+      }, 300);
+    }, 50);
+  }, [mappedMovie, addToFavorites]);
+  
+  const handleViewed = useCallback(() => {
+    if (viewRef.current) return;
+    viewRef.current = true;
+    
+    addToViewed(mappedMovie);
+    
+    setTimeout(() => {
+      setIndex((i) => i + 1);
+      setTimeout(() => {
+        viewRef.current = false;
+      }, 300);
+    }, 50);
+  }, [mappedMovie, addToViewed]);
+  
+  const handleDislike = useCallback(() => {
+    if (dislikeRef.current) return;
+    dislikeRef.current = true;
+    
+    setTimeout(() => {
+      setIndex((i) => i + 1);
+      setTimeout(() => {
+        dislikeRef.current = false;
+      }, 300);
+    }, 50);
+  }, []);
   /* ===== TELEGRAM INIT ===== */
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp
@@ -168,29 +207,9 @@ function AppContent() {
             {mappedMovie ? (
               <MovieCard
                 movie={mappedMovie}
-                onLike={() => {
-                  addToFavorites(mappedMovie)
-                  setIndex((i) => i + 1)
-                }}
-                onDislike={() => setIndex((i) => i + 1)}
-                onViewed={() => {
-                  // Проверяем, не обрабатывается ли уже нажатие
-                  if (viewedProcessingRef.current) return;
-                  
-                  viewedProcessingRef.current = true;
-                  
-                  addToViewed(mappedMovie);
-                  
-                  // Увеличиваем индекс с задержкой
-                  setTimeout(() => {
-                    setIndex((i) => i + 1);
-                    
-                    // Разблокируем через 300мс
-                    setTimeout(() => {
-                      viewedProcessingRef.current = false;
-                    }, 300);
-                  }, 100);
-                }}
+                onLike={handleLike}
+                onDislike={handleDislike}
+                onViewed={handleViewed}
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
