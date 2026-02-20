@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef } from "react"
 import { movies } from "./data/movies"
 import { MovieCard } from "./components/MovieCard"
 import type { Movie } from "./components/MovieCard"
@@ -74,8 +74,13 @@ function AppContent() {
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
   
-  // НОВОЕ: состояние для скрытия просмотренных
+  // Состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
+
+  // Рефы для предотвращения множественных нажатий
+  const likeProcessingRef = useRef(false)
+  const dislikeProcessingRef = useRef(false)
+  const viewedProcessingRef = useRef(false)
 
   // Получаем данные из контекстов
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
@@ -109,7 +114,7 @@ function AppContent() {
       const matchesGenre =
         selectedGenre === null || movieGenres.includes(selectedGenre)
 
-      // НОВОЕ: фильтр "Скрыть просмотренные"
+      // Фильтр "Скрыть просмотренные"
       const matchesViewed = !hideViewed || !isViewed(movie.title)
 
       return matchesEra && matchesGenre && matchesViewed
@@ -139,6 +144,42 @@ function AppContent() {
     }
   }, [currentMovieData])
 
+  // Обработчики с защитой от множественных нажатий
+  const handleLike = () => {
+    if (likeProcessingRef.current || !mappedMovie) return
+    likeProcessingRef.current = true
+    
+    addToFavorites(mappedMovie)
+    setIndex((i) => i + 1)
+    
+    setTimeout(() => {
+      likeProcessingRef.current = false
+    }, 300)
+  }
+
+  const handleDislike = () => {
+    if (dislikeProcessingRef.current) return
+    dislikeProcessingRef.current = true
+    
+    setIndex((i) => i + 1)
+    
+    setTimeout(() => {
+      dislikeProcessingRef.current = false
+    }, 300)
+  }
+
+  const handleViewed = () => {
+    if (viewedProcessingRef.current || !mappedMovie) return
+    viewedProcessingRef.current = true
+    
+    addToViewed(mappedMovie)
+    setIndex((i) => i + 1)
+    
+    setTimeout(() => {
+      viewedProcessingRef.current = false
+    }, 300)
+  }
+
   /* ===== UI КОМПОНЕНТЫ ===== */
   const content = (
     <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900">
@@ -163,15 +204,9 @@ function AppContent() {
             {mappedMovie ? (
               <MovieCard
                 movie={mappedMovie}
-                onLike={() => {
-                  addToFavorites(mappedMovie)
-                  setIndex((i) => i + 1)
-                }}
-                onDislike={() => setIndex((i) => i + 1)}
-                onViewed={() => {
-                  addToViewed(mappedMovie)
-                  setIndex((i) => i + 1)
-                }}
+                onLike={handleLike}
+                onDislike={handleDislike}
+                onViewed={handleViewed}
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
@@ -284,7 +319,7 @@ function AppContent() {
                 </div>
               </section>
 
-              {/* НОВАЯ СЕКЦИЯ: Скрыть просмотренные */}
+              {/* Секция: Скрыть просмотренные */}
               <section className="pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-gray-400 uppercase text-xs tracking-widest">
@@ -303,9 +338,6 @@ function AppContent() {
                     />
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
-                </p>
               </section>
             </div>
           </div>
