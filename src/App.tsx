@@ -152,7 +152,7 @@ function AppContent() {
       <div className="h-full pb-20">
         {/* ЛЕНТА (FEED) */}
         {view === "feed" && (
-          <div className="relative h-full pt-32 flex justify-center px-4">
+          <div className="relative h-full pt-28 flex justify-center px-4">
             <button
               onClick={() => setIsFilterOpen(true)}
               className="absolute top-20 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
