@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useRef, useCallback } from "react"
 import { movies } from "./data/movies"
 import { MovieCard } from "./components/MovieCard"
 import type { Movie } from "./components/MovieCard"
 import { PhonePreview } from "./components/PhonePreview"
 import { BottomBar } from "./components/BottomBar"
 import { Filter, X } from "lucide-react"
+
 
 // Импорты контекстов
 import { FavoritesProvider, useFavorites } from "./context/FavoritesContext"
@@ -73,6 +74,10 @@ function AppContent() {
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
+
+  const likeProcessingRef = useRef(false);
+  const viewProcessingRef = useRef(false);
+  const dislikeProcessingRef = useRef(false);
   
   // НОВОЕ: состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
@@ -169,8 +174,22 @@ function AppContent() {
                 }}
                 onDislike={() => setIndex((i) => i + 1)}
                 onViewed={() => {
-                  addToViewed(mappedMovie)
-                  setIndex((i) => i + 1)
+                  // Проверяем, не обрабатывается ли уже нажатие
+                  if (viewedProcessingRef.current) return;
+                  
+                  viewedProcessingRef.current = true;
+                  
+                  addToViewed(mappedMovie);
+                  
+                  // Увеличиваем индекс с задержкой
+                  setTimeout(() => {
+                    setIndex((i) => i + 1);
+                    
+                    // Разблокируем через 300мс
+                    setTimeout(() => {
+                      viewedProcessingRef.current = false;
+                    }, 300);
+                  }, 100);
                 }}
                 isViewed={isViewed(mappedMovie.title)}
               />
