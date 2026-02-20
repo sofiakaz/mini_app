@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import {
   Heart,
   X,
@@ -8,7 +8,7 @@ import {
   Info,
   Clock,
   Film,
-  Eye,  // Добавлено для кнопки просмотра
+  Eye,
 } from "lucide-react"
 
 export interface Movie {
@@ -27,24 +27,28 @@ interface Props {
   movie: Movie
   onLike?: () => void
   onDislike?: () => void
-  onViewed?: () => void  // Добавлено
+  onViewed?: () => void
   onRemove?: () => void
   isFavorite?: boolean
-  isViewed?: boolean  // Добавлено
+  isViewed?: boolean
 }
 
 export function MovieCard({
   movie,
   onLike,
   onDislike,
-  onViewed,  // Добавлено
+  onViewed,
   onRemove,
   isFavorite = false,
-  isViewed = false,  // Добавлено
+  isViewed = false,
 }: Props) {
   const [showInfo, setShowInfo] = useState(false)
   const [currentMovie, setCurrentMovie] = useState(movie)
   const [loading, setLoading] = useState(false)
+  
+  // Добавляем ref для отслеживания состояния кнопок
+  const isProcessing = useRef(false)
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false)
 
   useEffect(() => {
     if (movie.poster === currentMovie.poster) return
@@ -58,6 +62,22 @@ export function MovieCard({
       setLoading(false)
     }
   }, [movie, currentMovie.poster])
+
+  // Универсальная функция для обработки нажатий
+  const handleAction = (action?: () => void) => {
+    if (!action || isProcessing.current) return
+    
+    isProcessing.current = true
+    setIsButtonDisabled(true)
+    
+    action()
+    
+    // Разблокируем кнопки через 300мс
+    setTimeout(() => {
+      isProcessing.current = false
+      setIsButtonDisabled(false)
+    }, 300)
+  }
 
   return (
     <div className="w-full flex justify-center">
@@ -109,24 +129,33 @@ export function MovieCard({
 
             {/* ACTION BUTTONS */}
             {!isFavorite && (
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 z-10">  {/* Уменьшен gap для трех кнопок */}
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 z-10">
                 <button
-                  onClick={() => onDislike?.()}
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg"
+                  onClick={() => handleAction(onDislike)}
+                  disabled={isButtonDisabled}
+                  className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transition-all ${
+                    isButtonDisabled ? 'opacity-50 scale-95' : 'active:scale-95'
+                  }`}
                 >
                   <X className="w-6 h-6 text-red-500" />
                 </button>
 
                 <button
-                  onClick={() => onViewed?.()}  // Добавлено
-                  className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
+                  onClick={() => handleAction(onViewed)}
+                  disabled={isButtonDisabled}
+                  className={`w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                    isButtonDisabled ? 'opacity-50 scale-95' : 'active:scale-95'
+                  }`}
                 >
                   <Eye className="w-6 h-6 text-white" />
                 </button>
 
                 <button
-                  onClick={() => onLike?.()}
-                  className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-xl"
+                  onClick={() => handleAction(onLike)}
+                  disabled={isButtonDisabled}
+                  className={`w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-xl transition-all ${
+                    isButtonDisabled ? 'opacity-50 scale-95' : 'active:scale-95'
+                  }`}
                 >
                   <Heart className="w-6 h-6 text-white fill-white" />
                 </button>
@@ -137,8 +166,11 @@ export function MovieCard({
             {isFavorite && (
               <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
                 <button
-                  onClick={() => onRemove?.()}
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition"
+                  onClick={() => handleAction(onRemove)}
+                  disabled={isButtonDisabled}
+                  className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl transition-all ${
+                    isButtonDisabled ? 'opacity-50 scale-95' : 'active:scale-95'
+                  }`}
                 >
                   <X className="w-6 h-6 text-red-500" />
                 </button>
