@@ -6,7 +6,6 @@ import { PhonePreview } from "./components/PhonePreview"
 import { BottomBar } from "./components/BottomBar"
 import { Filter, X } from "lucide-react"
 
-
 // Импорты контекстов
 import { FavoritesProvider, useFavorites } from "./context/FavoritesContext"
 import { ViewedProvider, useViewed } from "./context/ViewedContext"
@@ -74,20 +73,22 @@ function AppContent() {
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
-
-  const likeProcessingRef = useRef(false);
-  const viewProcessingRef = useRef(false);
-  const dislikeProcessingRef = useRef(false);
   
   // НОВОЕ: состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
+
+  // Refs для предотвращения множественных нажатий
+  const likeRef = useRef(false);
+  const viewRef = useRef(false);
+  const dislikeRef = useRef(false);
 
   // Получаем данные из контекстов
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
+  // Обработчики с защитой от множественных нажатий
   const handleLike = useCallback(() => {
-    if (likeRef.current) return;
+    if (likeRef.current || !mappedMovie) return;
     likeRef.current = true;
     
     addToFavorites(mappedMovie);
@@ -99,9 +100,9 @@ function AppContent() {
       }, 300);
     }, 50);
   }, [mappedMovie, addToFavorites]);
-  
+
   const handleViewed = useCallback(() => {
-    if (viewRef.current) return;
+    if (viewRef.current || !mappedMovie) return;
     viewRef.current = true;
     
     addToViewed(mappedMovie);
@@ -113,7 +114,7 @@ function AppContent() {
       }, 300);
     }, 50);
   }, [mappedMovie, addToViewed]);
-  
+
   const handleDislike = useCallback(() => {
     if (dislikeRef.current) return;
     dislikeRef.current = true;
@@ -125,6 +126,7 @@ function AppContent() {
       }, 300);
     }, 50);
   }, []);
+
   /* ===== TELEGRAM INIT ===== */
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp
@@ -196,10 +198,10 @@ function AppContent() {
       <div className="h-full pb-20">
         {/* ЛЕНТА (FEED) */}
         {view === "feed" && (
-          <div className="relative h-full pt-40 flex justify-center px-4">
+          <div className="relative h-full pt-32 flex justify-center px-4">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="absolute top-24 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+              className="absolute top-20 right-6 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-red-500 shadow-lg flex items-center justify-center active:scale-95 transition-transform"
             >
               <Filter className="w-5 h-5 text-white" />
             </button>
@@ -213,20 +215,7 @@ function AppContent() {
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <p className="text-xl font-medium">Фильмы не найдены</p>
-                <p className="text-sm mt-2">Попробуйте изменить настройки фильтра</p>
-                <button 
-                  onClick={() => {
-                    setHideViewed(false)
-                    setSelectedEras([])
-                    setSelectedGenre(null)
-                  }}
-                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium"
-                >
-                  Сбросить фильтры
-                </button>
-              </div>
+              <div className="mt-40 text-gray-500">Фильмы не найдены 🔍</div>
             )}
           </div>
         )}
@@ -272,7 +261,7 @@ function AppContent() {
       {isFilterOpen && (
         <div className="absolute inset-0 z-[60]">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 h-[85%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 h-[70%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-bold">Фильтры</h3>
@@ -341,9 +330,6 @@ function AppContent() {
                     />
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Включите, чтобы не показывать фильмы, которые вы уже посмотрели
-                </p>
               </section>
             </div>
           </div>
