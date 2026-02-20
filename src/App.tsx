@@ -123,7 +123,7 @@ function AppContent() {
       year: currentMovieData.year,
       country: (currentMovieData as any).country ?? "—",
       poster: currentMovieData.poster,
-      rating: (currentMovieData as any).vote_average ?? currentMovieData.rating,
+      rating: currentMovieData.vote_average ?? 0,
       description: currentMovieData.description,
       director: currentMovieData.director,
       duration: currentMovieData.duration,
