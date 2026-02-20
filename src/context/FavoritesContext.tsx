@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase, getUserId } from '../supabase'
 import type { Movie } from "../components/MovieCard"
 
@@ -10,11 +10,10 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | null>(null)
 
-export function FavoritesProvider({ children }: { children: ReactNode }) {
+export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<Movie[]>([])
   const userId = getUserId()
 
-  // Загрузить избранное из Supabase при старте
   useEffect(() => {
     loadFavorites()
   }, [])
@@ -26,7 +25,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
     
     if (data) {
-      const movies: Movie[] = data.map(row => ({
+      const movies: Movie[] = data.map((row: any) => ({
         title: row.title,
         year: row.year,
         poster: row.poster,
@@ -42,7 +41,6 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }
 
   const addToFavorites = async (movie: Movie) => {
-    // Добавляем в Supabase
     await supabase.from('favorites').upsert({
       user_id: userId,
       title: movie.title,
@@ -56,21 +54,18 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       description: movie.description,
     }, { onConflict: 'user_id,title' })
     
-    // Добавляем в локальный стейт
     setFavorites((prev) =>
       prev.some((m) => m.title === movie.title) ? prev : [...prev, movie]
     )
   }
 
   const removeFromFavorites = async (title: string) => {
-    // Удаляем из Supabase
     await supabase
       .from('favorites')
       .delete()
       .eq('user_id', userId)
       .eq('title', title)
     
-    // Удаляем из локального стейта
     setFavorites((prev) => prev.filter((movie) => movie.title !== title))
   }
 
