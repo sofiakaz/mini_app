@@ -1,46 +1,22 @@
-console.log('🔥🔥🔥 СУПЕР ВАЖНО: Я ВНУТРИ supabase.ts');
-console.log('Время:', new Date().toISOString());
-console.log('URL страницы:', window.location.href);
-
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://cvqdnemgrlimzdxbdzjl.supabase.co'
-const supabaseKey = 'тут все есть, просто тебе не скидываю'
-
-console.log('URL загружен:', supabaseUrl);
-console.log('Ключ загружен, длина:', supabaseKey?.length);
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cWRuZW1ncmxpbXpkeGJkempsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjI4MzEsImV4cCI6MjA4NzA5ODgzMX0.lbr5DopcgRmzZWUS0ts8cLyIlAexhNjymPEF8pbKOwE'
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
-console.log('Клиент Supabase создан:', !!supabase);
-
-// Тест подключения
-supabase.from('favorites').select('count', { count: 'exact', head: true })
-  .then(() => console.log('✅ Тест подключения прошел успешно'))
-  .catch(err => console.log('❌ Тест подключения провалился:', err.message))
 
 export function getUserId(): string {
-  console.log('🆔 getUserId вызван');
-  if (typeof window !== 'undefined') {
-    try {
-      const tg = (window as any).Telegram?.WebApp
-      if (tg?.initDataUnsafe?.user?.id) {
-        const userId = `tg_${tg.initDataUnsafe.user.id}`
-        console.log('👤 Telegram user ID:', userId)
-        return userId
-      }
-    } catch (e) {
-      console.warn('Telegram WebApp не доступен')
-    }
-    
-    // Браузер (локальная разработка)
-    let userId = localStorage.getItem('movie_app_user_id')
-    if (!userId) {
-      userId = `guest_${crypto.randomUUID()}`
-      localStorage.setItem('movie_app_user_id', userId)
-    }
-    console.log('👤 Guest user ID:', userId)
-    return userId
+  // Telegram
+  const tg = (window as any).Telegram?.WebApp
+  if (tg?.initDataUnsafe?.user?.id) {
+    return `tg_${tg.initDataUnsafe.user.id}`
   }
   
-  return `guest_${Date.now()}`
+  // Браузер (fallback)
+  let userId = localStorage.getItem('movie_app_user_id')
+  if (!userId) {
+    userId = `guest_${crypto.randomUUID()}`
+    localStorage.setItem('movie_app_user_id', userId)
+  }
+  return userId
 }
