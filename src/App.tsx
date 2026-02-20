@@ -73,59 +73,59 @@ function AppContent() {
   const [selectedEras, setSelectedEras] = useState<Era[]>([])
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null)
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
-  
+
   // НОВОЕ: состояние для скрытия просмотренных
   const [hideViewed, setHideViewed] = useState(false)
 
-  // Refs для предотвращения множественных нажатий - ИСПРАВЛЕНО!
-  const likeRef = useRef(false);
-  const viewRef = useRef(false);
-  const dislikeRef = useRef(false);
+  // ✅ ПРАВИЛЬНЫЕ REF-Ы (исправлено)
+  const likeRef = useRef(false)
+  const viewRef = useRef(false)
+  const dislikeRef = useRef(false)
 
   // Получаем данные из контекстов
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { addToViewed, isViewed } = useViewed()
 
-  // Обработчики с защитой от множественных нажатий
+  // ✅ ПРАВИЛЬНЫЕ ОБРАБОТЧИКИ (исправлено)
   const handleLike = useCallback(() => {
-    if (likeRef.current) return;
-    likeRef.current = true;
-    
-    addToFavorites(mappedMovie);
-    
+    if (likeRef.current || !mappedMovie) return
+    likeRef.current = true
+
+    addToFavorites(mappedMovie)
+
     setTimeout(() => {
-      setIndex((i) => i + 1);
+      setIndex((i) => i + 1)
       setTimeout(() => {
-        likeRef.current = false;
-      }, 300);
-    }, 50);
-  }, [mappedMovie, addToFavorites]);
+        likeRef.current = false
+      }, 300)
+    }, 50)
+  }, [mappedMovie, addToFavorites])
 
   const handleViewed = useCallback(() => {
-    if (viewRef.current) return;
-    viewRef.current = true;
-    
-    addToViewed(mappedMovie);
-    
+    if (viewRef.current || !mappedMovie) return
+    viewRef.current = true
+
+    addToViewed(mappedMovie)
+
     setTimeout(() => {
-      setIndex((i) => i + 1);
+      setIndex((i) => i + 1)
       setTimeout(() => {
-        viewRef.current = false;
-      }, 300);
-    }, 50);
-  }, [mappedMovie, addToViewed]);
+        viewRef.current = false
+      }, 300)
+    }, 50)
+  }, [mappedMovie, addToViewed])
 
   const handleDislike = useCallback(() => {
-    if (dislikeRef.current) return;
-    dislikeRef.current = true;
-    
+    if (dislikeRef.current) return
+    dislikeRef.current = true
+
     setTimeout(() => {
-      setIndex((i) => i + 1);
+      setIndex((i) => i + 1)
       setTimeout(() => {
-        dislikeRef.current = false;
-      }, 300);
-    }, 50);
-  }, []);
+        dislikeRef.current = false
+      }, 300)
+    }, 50)
+  }, [])
 
   /* ===== TELEGRAM INIT ===== */
   useEffect(() => {
@@ -142,7 +142,6 @@ function AppContent() {
   /* ===== ЛОГИКА ФИЛЬТРАЦИИ ===== */
   const filteredMovies = useMemo(() => {
     const result = movies.filter((movie) => {
-      // Фильтр по эпохе
       const matchesEra =
         selectedEras.length === 0 ||
         selectedEras.some((eraKey) => {
@@ -150,12 +149,11 @@ function AppContent() {
           return movie.year >= era.from && movie.year <= era.to
         })
 
-      // Фильтр по жанру
       const movieGenres = movie.genres.map(normalizeGenre)
       const matchesGenre =
         selectedGenre === null || movieGenres.includes(selectedGenre)
 
-      // НОВОЕ: фильтр "Скрыть просмотренные"
+      // Фильтр "Скрыть просмотренные"
       const matchesViewed = !hideViewed || !isViewed(movie.title)
 
       return matchesEra && matchesGenre && matchesViewed
