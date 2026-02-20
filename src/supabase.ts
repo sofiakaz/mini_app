@@ -6,17 +6,22 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
 export function getUserId(): string {
-  // Telegram
-  const tg = (window as any).Telegram?.WebApp
-  if (tg?.initDataUnsafe?.user?.id) {
-    return `tg_${tg.initDataUnsafe.user.id}`
+  try {
+    // Telegram
+    const tg = (window as any).Telegram?.WebApp
+    if (tg?.initDataUnsafe?.user?.id) {
+      return `tg_${tg.initDataUnsafe.user.id}`
+    }
+    
+    // Браузер (fallback)
+    let userId = localStorage.getItem('movie_app_user_id')
+    if (!userId) {
+      userId = `guest_${crypto.randomUUID()}`
+      localStorage.setItem('movie_app_user_id', userId)
+    }
+    return userId
+  } catch {
+    // Убрали параметр err, так как он не используется
+    return `guest_${Date.now()}`
   }
-  
-  // Браузер (fallback)
-  let userId = localStorage.getItem('movie_app_user_id')
-  if (!userId) {
-    userId = `guest_${crypto.randomUUID()}`
-    localStorage.setItem('movie_app_user_id', userId)
-  }
-  return userId
 }
