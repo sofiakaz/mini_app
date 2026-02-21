@@ -114,7 +114,6 @@ function AppContent() {
   // Обработчики с защитой от множественных нажатий
   // Обработчики с защитой от множественных нажатий
 const handleLike = () => {
-  console.log('🔥 handleLike called for:', mappedMovie?.title)
   if (isProcessing.current || !mappedMovie) return
   isProcessing.current = true
   
@@ -127,7 +126,6 @@ const handleLike = () => {
 }
 
 const handleDislike = () => {
-  console.log('❌ handleDislike called for:', mappedMovie?.title)
   if (isProcessing.current) return
   isProcessing.current = true
   
@@ -139,12 +137,8 @@ const handleDislike = () => {
 }
 
 const handleViewed = () => {
-  console.log('👁️ handleViewed called for:', mappedMovie?.title)
   if (!mappedMovie) return
-  
   addToViewed(mappedMovie)
-  // Не меняем index - фильм не листается!
-  console.log('👁️ handleViewed finished, index not changed')
 }
 
   const content = (
