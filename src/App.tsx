@@ -11,7 +11,7 @@ import { CollectionsPage } from "./components/CollectionsPage"
 
 type Era = "pre2000" | "2000s" | "2010s" | "2020s"
 type View = "feed" | "favorites" | "collections"
-type Genre = "драма" | "фантастика" | "ужасы" | "комедия" | "триллер" | "детектив" | "семейный"
+type Genre = "драма" | "фантастика" | "ужасы" | "комедия" | "триллер" | "детектив" | "семейный" | "романтика"
 type TgUser = { id: number; first_name?: string; username?: string }
 
 const ERAS = [
@@ -29,6 +29,7 @@ const GENRES = [
   { label: "Триллер", value: "триллер" as Genre },
   { label: "Детектив", value: "детектив" as Genre },
   { label: "Семейный", value: "семейный" as Genre },
+  { label: "Романтика", value: "романтика" as Genre },
 ]
 
 // Вспомогательные функции
