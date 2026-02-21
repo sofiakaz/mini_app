@@ -56,7 +56,6 @@ function AppContent() {
   const [tgUser, setTgUser] = useState<TgUser | null>(null)
   const [hideViewed, setHideViewed] = useState(false)
   
-  // Реф для блокировки множественных нажатий
   const isProcessing = useRef(false)
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
@@ -73,7 +72,8 @@ function AppContent() {
     }
   }, [])
 
-  const filteredMovies = useMemo(() => {
+  // ЭТАП 1: Базовая фильтрация и перемешивание (только по жанрам и эрам)
+  const baseMovies = useMemo(() => {
     const result = movies.filter((movie) => {
       const matchesEra = selectedEras.length === 0 || selectedEras.some((eraKey) => {
         const era = ERAS.find((e) => e.key === eraKey)!
@@ -82,14 +82,21 @@ function AppContent() {
 
       const movieGenres = movie.genres.map(normalizeGenre)
       const matchesGenre = selectedGenre === null || movieGenres.includes(selectedGenre)
-      const matchesViewed = !hideViewed || !isViewed(movie.title)
 
-      return matchesEra && matchesGenre && matchesViewed
+      return matchesEra && matchesGenre
     })
 
     return shuffle(result)
-  }, [selectedEras, selectedGenre, hideViewed, isViewed])
+  }, [selectedEras, selectedGenre])
 
+  // ЭТАП 2: Финальный список (учитываем "Скрыть просмотренные")
+  // Мы не перемешиваем здесь, чтобы нажатие на глаз не меняло порядок
+  const filteredMovies = useMemo(() => {
+    if (!hideViewed) return baseMovies
+    return baseMovies.filter((movie) => !isViewed(movie.title))
+  }, [baseMovies, hideViewed, isViewed])
+
+  // Сбрасываем индекс при изменении фильтров
   useEffect(() => {
     setIndex(0)
   }, [selectedEras, selectedGenre, hideViewed])
@@ -111,35 +118,34 @@ function AppContent() {
     }
   }, [currentMovieData])
 
-  // Обработчики с защитой от множественных нажатий
-  // Обработчики с защитой от множественных нажатий
-const handleLike = () => {
-  if (isProcessing.current || !mappedMovie) return
-  isProcessing.current = true
-  
-  addToFavorites(mappedMovie)
-  setIndex(i => i + 1)
-  
-  setTimeout(() => {
-    isProcessing.current = false
-  }, 500)
-}
+  const handleLike = () => {
+    if (isProcessing.current || !mappedMovie) return
+    isProcessing.current = true
+    
+    addToFavorites(mappedMovie)
+    setIndex(i => i + 1)
+    
+    setTimeout(() => {
+      isProcessing.current = false
+    }, 500)
+  }
 
-const handleDislike = () => {
-  if (isProcessing.current) return
-  isProcessing.current = true
-  
-  setIndex(i => i + 1)
-  
-  setTimeout(() => {
-    isProcessing.current = false
-  }, 500)
-}
+  const handleDislike = () => {
+    if (isProcessing.current) return
+    isProcessing.current = true
+    
+    setIndex(i => i + 1)
+    
+    setTimeout(() => {
+      isProcessing.current = false
+    }, 500)
+  }
 
-const handleViewed = () => {
-  if (!mappedMovie) return
-  addToViewed(mappedMovie)
-}
+  const handleViewed = () => {
+    if (!mappedMovie) return
+    // Просто добавляем в просмотренные, index НЕ меняем
+    addToViewed(mappedMovie)
+  }
 
   const content = (
     <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900">
@@ -168,16 +174,16 @@ const handleViewed = () => {
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 text-center px-6">
                 <p className="text-xl font-medium">Фильмы не найдены</p>
-                <p className="text-sm mt-2">Попробуйте изменить настройки фильтра</p>
+                <p className="text-sm mt-2">Попробуйте изменить настройки фильтра или сбросить их</p>
                 <button 
                   onClick={() => {
                     setHideViewed(false)
                     setSelectedEras([])
                     setSelectedGenre(null)
                   }}
-                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium"
+                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium active:scale-95 transition-transform"
                 >
                   Сбросить фильтры
                 </button>
