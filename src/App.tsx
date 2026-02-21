@@ -112,38 +112,40 @@ function AppContent() {
   }, [currentMovieData])
 
   // Обработчики с защитой от множественных нажатий
-  const handleLike = () => {
-    if (isProcessing.current || !mappedMovie) return
-    isProcessing.current = true
-    
-    addToFavorites(mappedMovie)
-    setIndex(i => i + 1)
-    
-    setTimeout(() => {
-      isProcessing.current = false
-    }, 500)
-  }
+  // Обработчики с защитой от множественных нажатий
+const handleLike = () => {
+  console.log('🔥 handleLike called for:', mappedMovie?.title)
+  if (isProcessing.current || !mappedMovie) return
+  isProcessing.current = true
+  
+  addToFavorites(mappedMovie)
+  setIndex(i => i + 1)
+  
+  setTimeout(() => {
+    isProcessing.current = false
+  }, 500)
+}
 
-  const handleDislike = () => {
-    if (isProcessing.current) return
-    isProcessing.current = true
-    
-    setIndex(i => i + 1)
-    
-    setTimeout(() => {
-      isProcessing.current = false
-    }, 500)
-  }
+const handleDislike = () => {
+  console.log('❌ handleDislike called for:', mappedMovie?.title)
+  if (isProcessing.current) return
+  isProcessing.current = true
+  
+  setIndex(i => i + 1)
+  
+  setTimeout(() => {
+    isProcessing.current = false
+  }, 500)
+}
 
-  const handleViewed = () => {
-    if (!mappedMovie) return
-    
-    // Убрали проверку isProcessing, чтобы можно было нажимать несколько раз
-    // и сразу после глазика нажать лайк
-    
-    addToViewed(mappedMovie)
-    // Не меняем index - фильм не листается!
-  }
+const handleViewed = () => {
+  console.log('👁️ handleViewed called for:', mappedMovie?.title)
+  if (!mappedMovie) return
+  
+  addToViewed(mappedMovie)
+  // Не меняем index - фильм не листается!
+  console.log('👁️ handleViewed finished, index not changed')
+}
 
   const content = (
     <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900">
