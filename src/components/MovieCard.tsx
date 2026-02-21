@@ -138,7 +138,7 @@ export function MovieCard({
 
             {/* ТЕКСТОВАЯ ИНФОРМАЦИЯ */}
             <div className="absolute bottom-20 left-4 right-4 text-white z-10">
-              <h2 className="text-2xl font-semibold mb-1 truncate">
+              <h2 className="text-2xl font-semibold mb-1 break-words max-h-24 overflow-y-auto no-scrollbar">
                 {currentMovie.title}
               </h2>
 
