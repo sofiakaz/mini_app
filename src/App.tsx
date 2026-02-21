@@ -140,7 +140,6 @@ function AppContent() {
     isProcessing.current = true
     
     addToViewed(mappedMovie)
-    setIndex(i => i + 1)
     
     setTimeout(() => {
       isProcessing.current = false
