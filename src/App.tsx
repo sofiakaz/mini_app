@@ -9,11 +9,13 @@ import { FavoritesProvider, useFavorites } from "./context/FavoritesContext"
 import { ViewedProvider, useViewed } from "./context/ViewedContext"
 import { CollectionsPage } from "./components/CollectionsPage"
 
+// Типы
 type Era = "pre2000" | "2000s" | "2010s" | "2020s"
 type View = "feed" | "favorites" | "collections"
 type Genre = "драма" | "фантастика" | "ужасы" | "комедия" | "триллер" | "детектив" | "семейный" | "романтика"
 type TgUser = { id: number; first_name?: string; username?: string }
 
+// Константы
 const ERAS = [
   { key: "pre2000", label: "До 2000", from: 0, to: 1999 },
   { key: "2000s", label: "2000–2010", from: 2000, to: 2010 },
@@ -33,10 +35,6 @@ const GENRES = [
 ]
 
 // Вспомогательные функции
-function normalizeGenre(genre: string): Genre {
-  return genre.trim().toLowerCase() as Genre
-}
-
 function formatGenres(genres: string[]) {
   if (genres.length === 0) return ""
   if (genres.length === 1) return genres[0]
@@ -61,7 +59,7 @@ function AppContent() {
   const isProcessing = useRef(false)
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
-  const { addToViewed, isViewed, removeFromViewed } = useViewed() // Добавили removeFromViewed
+  const { addToViewed, isViewed, removeFromViewed } = useViewed()
 
   // Telegram WebApp Init
   useEffect(() => {
@@ -75,29 +73,31 @@ function AppContent() {
     }
   }, [])
 
-  // Фильтрация и перемешивание
+  // Исправленная фильтрация
   const baseMovies = useMemo(() => {
     const result = movies.filter((movie) => {
+      // 1. Фильтр по эре
       const matchesEra = selectedEras.length === 0 || selectedEras.some((eraKey) => {
-        const era = ERAS.find((e) => e.key === eraKey)!
-        return movie.year >= era.from && movie.year <= era.to
+        const era = ERAS.find((e) => e.key === eraKey)
+        return era ? (movie.year >= era.from && movie.year <= era.to) : false
       })
 
-      const movieGenres = movie.genres.map(normalizeGenre)
-      const matchesGenre = selectedGenre === null || movieGenres.includes(selectedGenre)
+      // 2. Фильтр по жанру (нормализация строк для надежности)
+      const movieGenresLower = movie.genres.map(g => g.trim().toLowerCase())
+      const selectedGenreLower = selectedGenre?.trim().toLowerCase()
+      
+      const matchesGenre = !selectedGenreLower || movieGenresLower.includes(selectedGenreLower)
 
       return matchesEra && matchesGenre
     })
     return shuffle(result)
   }, [selectedEras, selectedGenre])
 
-  // Финальный список с учетом скрытия просмотренных
   const filteredMovies = useMemo(() => {
     if (!hideViewed) return baseMovies
     return baseMovies.filter((movie) => !isViewed(movie.title))
   }, [baseMovies, hideViewed, isViewed])
 
-  // Сброс индекса при изменении фильтров
   useEffect(() => {
     setIndex(0)
   }, [selectedEras, selectedGenre, hideViewed])
@@ -119,7 +119,6 @@ function AppContent() {
     }
   }, [currentMovieData])
 
-  // Обработчики действий
   const handleLike = () => {
     if (isProcessing.current || !mappedMovie) return
     isProcessing.current = true
@@ -135,16 +134,8 @@ function AppContent() {
     setTimeout(() => { isProcessing.current = false }, 500)
   }
 
-  const handleViewed = (movie: Movie) => {
-    addToViewed(movie)
-  }
-
-  const handleUnviewed = (movie: Movie) => {
-    removeFromViewed(movie)
-  }
-
   const content = (
-    <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900">
+    <div className="relative w-full h-screen bg-gradient-to-b from-rose-200 via-pink-100 to-neutral-200 overflow-hidden text-slate-900 font-sans">
       {tgUser && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-[10px] font-medium bg-white/60 backdrop-blur-md px-3 py-1 rounded-full shadow-sm border border-white/40">
           @{tgUser.username || tgUser.first_name}
@@ -152,7 +143,6 @@ function AppContent() {
       )}
 
       <div className="h-full pb-20">
-        {/* VIEW: FEED */}
         {view === "feed" && (
           <div className="relative h-full pt-40 flex justify-center px-4">
             <button
@@ -167,25 +157,25 @@ function AppContent() {
                 movie={mappedMovie}
                 onLike={handleLike}
                 onDislike={handleDislike}
-                onViewed={() => handleViewed(mappedMovie)}
-                onUnviewed={() => handleUnviewed(mappedMovie)} // Пробрасываем удаление
+                onViewed={() => addToViewed(mappedMovie)}
+                onUnviewed={() => removeFromViewed(mappedMovie)}
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 text-center px-6">
-                <p className="text-xl font-medium">Фильмы не найдены</p>
+                <p className="text-xl font-medium">Ничего не нашли 🍿</p>
+                <p className="text-sm mt-2">Попробуйте изменить фильтры эры или жанра</p>
                 <button 
                   onClick={() => { setHideViewed(false); setSelectedEras([]); setSelectedGenre(null); }}
-                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium"
+                  className="mt-6 px-6 py-2 bg-white rounded-full shadow-sm text-pink-500 font-bold active:scale-95 transition-all"
                 >
-                  Сбросить фильтры
+                  Сбросить всё
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* VIEW: FAVORITES */}
         {view === "favorites" && (
           <div className="h-full px-4 pt-6 pb-8 space-y-4 overflow-y-auto no-scrollbar">
             <h2 className="text-2xl font-bold px-2 mb-4 text-slate-800">Избранное</h2>
@@ -199,15 +189,14 @@ function AppContent() {
                   isFavorite
                   onRemove={() => removeFromFavorites(m.title)}
                   isViewed={isViewed(m.title)}
-                  onViewed={() => handleViewed(m)}
-                  onUnviewed={() => handleUnviewed(m)} // Пробрасываем удаление в избранном
+                  onViewed={() => addToViewed(m)}
+                  onUnviewed={() => removeFromViewed(m)}
                 />
               ))
             )}
           </div>
         )}
 
-        {/* VIEW: COLLECTIONS */}
         {view === "collections" && (
           <div className="h-full overflow-y-auto no-scrollbar">
             <CollectionsPage
@@ -215,8 +204,8 @@ function AppContent() {
               selectedCollection={selectedCollection}
               onBack={() => setSelectedCollection(null)}
               onLike={addToFavorites}
-              onViewed={handleViewed}
-              onUnviewed={handleUnviewed}
+              onViewed={addToViewed}
+              onUnviewed={removeFromViewed}
               isViewed={(title) => isViewed(title)}
             />
           </div>
@@ -230,16 +219,15 @@ function AppContent() {
           <div className="absolute bottom-0 left-0 right-0 h-[85%] bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 overflow-y-auto">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-bold">Фильтры</h3>
+              <h3 className="text-2xl font-bold">Настроить поиск</h3>
               <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-100 rounded-full">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             <div className="space-y-8">
-              {/* Эпохи */}
               <section>
-                <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Эпоха</h4>
+                <h4 className="font-bold mb-4 text-gray-400 uppercase text-[10px] tracking-widest">Эпоха выпуска</h4>
                 <div className="flex flex-wrap gap-2">
                   {ERAS.map((era) => {
                     const active = selectedEras.includes(era.key)
@@ -258,9 +246,8 @@ function AppContent() {
                 </div>
               </section>
 
-              {/* Жанры */}
               <section>
-                <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Жанр</h4>
+                <h4 className="font-bold mb-4 text-gray-400 uppercase text-[10px] tracking-widest">Жанр</h4>
                 <div className="flex flex-wrap gap-2">
                   {GENRES.map((g) => {
                     const active = selectedGenre === g.value
@@ -279,19 +266,16 @@ function AppContent() {
                 </div>
               </section>
 
-              {/* Переключатель "Скрыть просмотренные" */}
               <section className="pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-gray-400 uppercase text-xs tracking-widest">
-                    Скрыть просмотренные
-                  </h4>
+                  <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest">Скрыть просмотренные</h4>
                   <button
                     onClick={() => setHideViewed(!hideViewed)}
-                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${
+                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ${
                       hideViewed ? "bg-pink-500" : "bg-gray-300"
                     }`}
                   >
-                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
                       hideViewed ? "translate-x-6" : "translate-x-0"
                     }`} />
                   </button>
