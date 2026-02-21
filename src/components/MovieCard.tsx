@@ -59,6 +59,42 @@ export function MovieCard({
     }
   }, [movie, currentMovie.poster])
 
+  const handleViewed = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onViewed?.()
+  }
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onLike?.()
+  }
+
+  const handleDislike = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onDislike?.()
+  }
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onRemove?.()
+  }
+
+  const handleInfoOpen = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowInfo(true)
+  }
+
+  const handleInfoClose = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowInfo(false)
+  }
+
   return (
     <div className="w-full flex justify-center">
       <div className="relative w-full max-w-[320px] aspect-[4.8/7] rounded-[28px] overflow-hidden shadow-2xl bg-white">
@@ -74,7 +110,7 @@ export function MovieCard({
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/80" />
 
             <button
-              onClick={() => setShowInfo(true)}
+              onClick={handleInfoOpen}
               className="absolute top-3 right-3 z-20 bg-black/40 backdrop-blur rounded-full p-2"
             >
               <Info className="w-4 h-4 text-white" />
@@ -111,22 +147,22 @@ export function MovieCard({
             {!isFavorite && (
               <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8 z-10">
                 <button
-                  onClick={onDislike}
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                  onClick={handleDislike}
+                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all hover:bg-gray-100"
                 >
                   <X className="w-6 h-6 text-red-500" />
                 </button>
 
                 <button
-                  onClick={onViewed}
-                  className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                  onClick={handleViewed}
+                  className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all hover:bg-blue-600"
                 >
                   <Eye className="w-6 h-6 text-white" />
                 </button>
 
                 <button
-                  onClick={onLike}
-                  className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-xl active:scale-95 transition-all"
+                  onClick={handleLike}
+                  className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-xl active:scale-95 transition-all hover:from-pink-600 hover:to-red-600"
                 >
                   <Heart className="w-6 h-6 text-white fill-white" />
                 </button>
@@ -137,8 +173,8 @@ export function MovieCard({
             {isFavorite && (
               <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
                 <button
-                  onClick={onRemove}
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all"
+                  onClick={handleRemove}
+                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all hover:bg-gray-100"
                 >
                   <X className="w-6 h-6 text-red-500" />
                 </button>
@@ -170,8 +206,8 @@ export function MovieCard({
             >
               <div className="relative h-14">
                 <button
-                  onClick={() => setShowInfo(false)}
-                  className="absolute top-4 right-4 text-gray-500"
+                  onClick={handleInfoClose}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
                 >
                   <X className="w-6 h-6" />
                 </button>
