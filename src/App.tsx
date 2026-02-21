@@ -136,14 +136,13 @@ function AppContent() {
   }
 
   const handleViewed = () => {
-    if (isProcessing.current || !mappedMovie) return
-    isProcessing.current = true
+    if (!mappedMovie) return
+    
+    // Убрали проверку isProcessing, чтобы можно было нажимать несколько раз
+    // и сразу после глазика нажать лайк
     
     addToViewed(mappedMovie)
-    
-    setTimeout(() => {
-      isProcessing.current = false
-    }, 500)
+    // Не меняем index - фильм не листается!
   }
 
   const content = (
