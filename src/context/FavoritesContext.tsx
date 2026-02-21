@@ -23,6 +23,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       .from('favorites')
       .select('*')
       .eq('user_id', userId)
+      .order('created_at', { ascending: false }) // новые сверху
     
     if (data) {
       const movies: Movie[] = data.map((row: any) => ({
@@ -41,6 +42,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addToFavorites = async (movie: Movie) => {
+    // Используем upsert - если фильм уже есть, он обновится
     await supabase.from('favorites').upsert({
       user_id: userId,
       title: movie.title,
@@ -54,9 +56,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       description: movie.description,
     }, { onConflict: 'user_id,title' })
     
-    setFavorites((prev) =>
-      prev.some((m) => m.title === movie.title) ? prev : [...prev, movie]
-    )
+    // Обновляем локальный стейт
+    setFavorites((prev) => {
+      // Убираем старую версию фильма, если была
+      const withoutCurrent = prev.filter((m) => m.title !== movie.title)
+      // Добавляем фильм в начало (как самый свежий)
+      return [movie, ...withoutCurrent]
+    })
   }
 
   const removeFromFavorites = async (title: string) => {
