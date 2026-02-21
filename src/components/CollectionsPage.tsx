@@ -34,6 +34,7 @@ interface Props {
   onBack: () => void
   onLike: (movie: Movie) => void
   onViewed: (movie: Movie) => void
+  onUnviewed: (movie: Movie) => void
   isViewed: (title: string) => boolean
 }
 
@@ -43,6 +44,7 @@ export function CollectionsPage({
   onBack,
   onLike,
   onViewed,
+  onUnviewed,
   isViewed,
 }: Props) {
   const [collectionIndex, setCollectionIndex] = useState(0)
@@ -89,10 +91,8 @@ export function CollectionsPage({
               setCollectionIndex((i) => i + 1)
             }}
             onDislike={() => setCollectionIndex((i) => i + 1)}
-            onViewed={() => {
-              onViewed(mappedMovie)
-              // Убрали setCollectionIndex - теперь не листает!
-            }}
+            onViewed={() => onViewed(mappedMovie)}
+            onUnviewed={() => onUnviewed(mappedMovie)}
             isViewed={mappedMovie.title ? isViewed(mappedMovie.title) : false}
           />
         )}
