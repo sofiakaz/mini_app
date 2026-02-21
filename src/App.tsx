@@ -215,6 +215,7 @@ function AppContent() {
               onBack={() => setSelectedCollection(null)}
               onLike={addToFavorites}
               onViewed={handleViewed}
+              onUnviewed={handleUnviewed}
               isViewed={(title) => isViewed(title)}
             />
           </div>
