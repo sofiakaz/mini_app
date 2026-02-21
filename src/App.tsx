@@ -31,6 +31,7 @@ const GENRES = [
   { label: "Семейный", value: "семейный" as Genre },
 ]
 
+// Вспомогательные функции
 function normalizeGenre(genre: string): Genre {
   return genre.trim().toLowerCase() as Genre
 }
@@ -59,8 +60,9 @@ function AppContent() {
   const isProcessing = useRef(false)
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
-  const { addToViewed, isViewed } = useViewed()
+  const { addToViewed, isViewed, removeFromViewed } = useViewed() // Добавили removeFromViewed
 
+  // Telegram WebApp Init
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp
     if (tg) {
@@ -72,7 +74,7 @@ function AppContent() {
     }
   }, [])
 
-  // ЭТАП 1: Базовая фильтрация и перемешивание (только по жанрам и эрам)
+  // Фильтрация и перемешивание
   const baseMovies = useMemo(() => {
     const result = movies.filter((movie) => {
       const matchesEra = selectedEras.length === 0 || selectedEras.some((eraKey) => {
@@ -85,18 +87,16 @@ function AppContent() {
 
       return matchesEra && matchesGenre
     })
-
     return shuffle(result)
   }, [selectedEras, selectedGenre])
 
-  // ЭТАП 2: Финальный список (учитываем "Скрыть просмотренные")
-  // Мы не перемешиваем здесь, чтобы нажатие на глаз не меняло порядок
+  // Финальный список с учетом скрытия просмотренных
   const filteredMovies = useMemo(() => {
     if (!hideViewed) return baseMovies
     return baseMovies.filter((movie) => !isViewed(movie.title))
   }, [baseMovies, hideViewed, isViewed])
 
-  // Сбрасываем индекс при изменении фильтров
+  // Сброс индекса при изменении фильтров
   useEffect(() => {
     setIndex(0)
   }, [selectedEras, selectedGenre, hideViewed])
@@ -118,33 +118,28 @@ function AppContent() {
     }
   }, [currentMovieData])
 
+  // Обработчики действий
   const handleLike = () => {
     if (isProcessing.current || !mappedMovie) return
     isProcessing.current = true
-    
     addToFavorites(mappedMovie)
     setIndex(i => i + 1)
-    
-    setTimeout(() => {
-      isProcessing.current = false
-    }, 500)
+    setTimeout(() => { isProcessing.current = false }, 500)
   }
 
   const handleDislike = () => {
     if (isProcessing.current) return
     isProcessing.current = true
-    
     setIndex(i => i + 1)
-    
-    setTimeout(() => {
-      isProcessing.current = false
-    }, 500)
+    setTimeout(() => { isProcessing.current = false }, 500)
   }
 
-  const handleViewed = () => {
-    if (!mappedMovie) return
-    // Просто добавляем в просмотренные, index НЕ меняем
-    addToViewed(mappedMovie)
+  const handleViewed = (movie: Movie) => {
+    addToViewed(movie)
+  }
+
+  const handleUnviewed = (movie: Movie) => {
+    removeFromViewed(movie)
   }
 
   const content = (
@@ -156,6 +151,7 @@ function AppContent() {
       )}
 
       <div className="h-full pb-20">
+        {/* VIEW: FEED */}
         {view === "feed" && (
           <div className="relative h-full pt-40 flex justify-center px-4">
             <button
@@ -170,20 +166,16 @@ function AppContent() {
                 movie={mappedMovie}
                 onLike={handleLike}
                 onDislike={handleDislike}
-                onViewed={handleViewed}
+                onViewed={() => handleViewed(mappedMovie)}
+                onUnviewed={() => handleUnviewed(mappedMovie)} // Пробрасываем удаление
                 isViewed={isViewed(mappedMovie.title)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 text-center px-6">
                 <p className="text-xl font-medium">Фильмы не найдены</p>
-                <p className="text-sm mt-2">Попробуйте изменить настройки фильтра или сбросить их</p>
                 <button 
-                  onClick={() => {
-                    setHideViewed(false)
-                    setSelectedEras([])
-                    setSelectedGenre(null)
-                  }}
-                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium active:scale-95 transition-transform"
+                  onClick={() => { setHideViewed(false); setSelectedEras([]); setSelectedGenre(null); }}
+                  className="mt-4 px-4 py-2 bg-white rounded-full shadow text-pink-500 font-medium"
                 >
                   Сбросить фильтры
                 </button>
@@ -192,9 +184,10 @@ function AppContent() {
           </div>
         )}
 
+        {/* VIEW: FAVORITES */}
         {view === "favorites" && (
           <div className="h-full px-4 pt-6 pb-8 space-y-4 overflow-y-auto no-scrollbar">
-            <h2 className="text-2xl font-bold px-2 mb-4">Избранное</h2>
+            <h2 className="text-2xl font-bold px-2 mb-4 text-slate-800">Избранное</h2>
             {favorites.length === 0 ? (
               <div className="text-center text-gray-400 mt-32">Здесь пока пусто 💔</div>
             ) : (
@@ -205,12 +198,15 @@ function AppContent() {
                   isFavorite
                   onRemove={() => removeFromFavorites(m.title)}
                   isViewed={isViewed(m.title)}
+                  onViewed={() => handleViewed(m)}
+                  onUnviewed={() => handleUnviewed(m)} // Пробрасываем удаление в избранном
                 />
               ))
             )}
           </div>
         )}
 
+        {/* VIEW: COLLECTIONS */}
         {view === "collections" && (
           <div className="h-full overflow-y-auto no-scrollbar">
             <CollectionsPage
@@ -218,13 +214,14 @@ function AppContent() {
               selectedCollection={selectedCollection}
               onBack={() => setSelectedCollection(null)}
               onLike={addToFavorites}
-              onViewed={addToViewed}
+              onViewed={handleViewed}
               isViewed={(title) => isViewed(title)}
             />
           </div>
         )}
       </div>
 
+      {/* FILTER DRAWER */}
       {isFilterOpen && (
         <div className="absolute inset-0 z-[60]">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)} />
@@ -238,6 +235,7 @@ function AppContent() {
             </div>
 
             <div className="space-y-8">
+              {/* Эпохи */}
               <section>
                 <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Эпоха</h4>
                 <div className="flex flex-wrap gap-2">
@@ -258,6 +256,7 @@ function AppContent() {
                 </div>
               </section>
 
+              {/* Жанры */}
               <section>
                 <h4 className="font-bold mb-4 text-gray-400 uppercase text-xs tracking-widest">Жанр</h4>
                 <div className="flex flex-wrap gap-2">
@@ -278,6 +277,7 @@ function AppContent() {
                 </div>
               </section>
 
+              {/* Переключатель "Скрыть просмотренные" */}
               <section className="pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-gray-400 uppercase text-xs tracking-widest">
@@ -289,11 +289,9 @@ function AppContent() {
                       hideViewed ? "bg-pink-500" : "bg-gray-300"
                     }`}
                   >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
-                        hideViewed ? "translate-x-6" : "translate-x-0"
-                      }`}
-                    />
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                      hideViewed ? "translate-x-6" : "translate-x-0"
+                    }`} />
                   </button>
                 </div>
               </section>
