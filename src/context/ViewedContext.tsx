@@ -42,24 +42,24 @@ export function ViewedProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addToViewed = useCallback(async (movie: Movie) => {
-    await supabase.from('viewed').upsert({
-      user_id: userId,
-      title: movie.title,
-      year: movie.year,
-      poster: movie.poster,
-      rating: movie.rating,
-      country: movie.country,
-      director: movie.director,
-      duration: movie.duration,
-      genre: movie.genre,
-      description: movie.description,
-    }, { onConflict: 'user_id,title' })
-    
-    setViewed((prev) => {
-      if (prev.some((m) => m.title === movie.title)) return prev
-      return [...prev, movie]
-    })
-  }, [userId])
+    // Проверяем, есть ли уже фильм в просмотренных
+    if (!viewed.some(m => m.title === movie.title)) {
+      await supabase.from('viewed').insert({
+        user_id: userId,
+        title: movie.title,
+        year: movie.year,
+        poster: movie.poster,
+        rating: movie.rating,
+        country: movie.country,
+        director: movie.director,
+        duration: movie.duration,
+        genre: movie.genre,
+        description: movie.description,
+      })
+      
+      setViewed((prev) => [...prev, movie])
+    }
+  }, [userId, viewed])
 
   const removeFromViewed = useCallback(async (movie: Movie) => {
     await supabase
